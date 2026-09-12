@@ -31,6 +31,8 @@ Open `index.html` directly, or serve the folder with any static web server (for 
 - `styles.css` — responsive dark-fantasy presentation and placeholder gem-convergence animation
 - `data.js` — canonical 20-essence/100-ability catalogue, 20-key mapping, and progression rules
 - `game.js` — game loop, input, combat, enemy AI, state transitions, prison interaction, and inventory
+- `assets/characters/player/default/player-atlas.png` — four-direction base atlas for idle, block, and defeated states
+- `assets/characters/player/default/{walk,sprint,attack}.png` — dedicated eight-frame transparent motion atlases; attack cells include extra sword-effect padding
 
 The progression model enforces three core essences plus one confluence essence. Completing the build unlocks the first ability from each essence (four total); awakening stones then unlock the remaining sixteen, producing twenty abilities in the build. Mechanical implementations for essence abilities are intentionally scaffolded for later development.
 
