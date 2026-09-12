@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Eldoria: Confluence</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main id="game-shell">
+    <canvas id="game" aria-label="Eldoria game world"></canvas>
+    <div id="hud">
+      <div class="brand"><span>ELDORIA</span><small>CONFLUENCE</small></div>
+      <div class="status"><div class="bar"><i id="health-fill"></i></div><span id="health-label">100 / 100</span></div>
+      <div id="objective" class="objective"><small>NEW OBJECTIVE</small><b>Survive</b></div>
+      <div id="prompt" class="prompt hidden"></div>
+      <div id="ability-bar"></div>
+      <div class="hints"><b>WASD</b> Move · <b>Shift</b> Sprint · <b>Q</b> Dash · <b>Space / J</b> Attack · <b>H</b> Block · <b>O</b> Inventory</div>
+    </div>
+    <section id="intro" class="modal">
+      <div class="modal-card story-card"><div class="sigil">✦</div><p class="eyebrow">A WORLD BEYOND</p><h1>You have been transported to <em>Eldoria</em>.</h1><p>The air tastes of wild magic. Somewhere beyond the meadow, iron bells begin to toll.</p><button id="begin">Enter Eldoria</button></div>
+    </section>
+    <section id="dialogue" class="modal hidden"><div class="modal-card"><p class="eyebrow" id="dialogue-speaker"></p><h2 id="dialogue-title"></h2><p id="dialogue-copy"></p><button id="dialogue-next">Continue</button></div></section>
+    <section id="inventory" class="panel hidden">
+      <header><div><p class="eyebrow">TRAVELLER'S SATCHEL</p><h2>Inventory</h2></div><button id="close-inventory" aria-label="Close">×</button></header>
+      <div class="tools"><input id="search" placeholder="Search inventory…"><select id="type-filter"><option value="all">All types</option><option>Essence</option><option>Weapon</option><option>Consumable</option><option>Equipment</option></select><select id="rarity-filter"><option value="all">All rarities</option><option>Common</option><option>Uncommon</option><option>Rare</option><option>Epic</option><option>Legendary</option></select></div>
+      <div id="inventory-items" class="items"></div>
+      <footer><span id="inventory-count"></span><span>Press O to close</span></footer>
+    </section>
+    <section id="confluence" class="modal hidden"><div class="modal-card"><p class="eyebrow">CONFLUENCE AWAKENED</p><h2>Three become one</h2><div class="gem-stage"><i class="gem g1"></i><i class="gem g2"></i><i class="gem g3"></i><i class="gem g4"></i></div><p>The core essences converge, revealing a fourth path.</p><button id="close-confluence">Continue</button></div></section>
+    <div id="fade"></div>
+  </main>
+  <script src="data.js"></script><script src="game.js"></script>
+</body>
+</html>
