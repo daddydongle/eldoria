@@ -28,10 +28,58 @@ function initSlots(){$('#ability-bar').innerHTML=ELDORIA_DATA.ABILITY_KEYS.map((
 function update(dt){if(!state.started||!ui.inventory.classList.contains('hidden')||!ui.dialogue.classList.contains('hidden'))return;state.time+=dt;const p=state.player;let dx=(state.keys.has('d')||state.keys.has('arrowright')?1:0)-(state.keys.has('a')||state.keys.has('arrowleft')?1:0),dy=(state.keys.has('s')||state.keys.has('arrowdown')?1:0)-(state.keys.has('w')||state.keys.has('arrowup')?1:0);const l=Math.hypot(dx,dy)||1;p.moving=!!(dx||dy);p.sprinting=p.moving&&state.keys.has('shift');if(p.moving){p.angle=Math.atan2(dy,dx);p.direction=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')}p.animTime+=dt;const speed=(p.sprinting?205:125)*(p.dash>0?3.2:1);dx/=l;dy/=l;p.x+=dx*speed*dt;p.y+=dy*speed*dt;p.attacking=Math.max(0,p.attacking-dt);p.dash=Math.max(0,p.dash-dt);if(state.scene==='meadow'){p.x=Math.max(-620,Math.min(620,p.x));p.y=Math.max(-420,Math.min(420,p.y));for(const e of state.enemies){let ex=p.x-e.x,ey=p.y-e.y,el=Math.hypot(ex,ey)||1;e.x+=ex/el*e.speed*dt;e.y+=ey/el*e.speed*dt;e.cooldown-=dt;e.hit=Math.max(0,e.hit-dt);if(el<42&&e.cooldown<=0){p.hp-=e.damage*(p.blocking?.25:1);e.cooldown=.8}}state.enemies=state.enemies.filter(e=>e.hp>0);if(p.hp<=0)defeat()}else if(state.scene==='prison'){p.x=Math.max(-220,Math.min(220,p.x));p.y=Math.max(state.doorOpen?-330:-175,Math.min(175,p.y));if(state.doorOpen&&p.y<-285&&!state.items.some(x=>x.kind==='essence'&&!x.taken)){setObjective('Reach the sanctuary');ui.prompt.classList.add('hidden')}}$('#health-fill').style.width=`${Math.max(0,p.hp/p.maxHp*100)}%`;$('#health-label').textContent=`${Math.max(0,Math.ceil(p.hp))} / ${p.maxHp}`;updatePrompt()}
 function updatePrompt(){let msg='';if(state.scene==='prison'){const p=state.player;for(const x of state.items.filter(i=>!i.taken))if(Math.hypot(x.x-p.x,x.y-p.y)<70)msg=x.kind==='meal'?'<b>F</b> Search meal tray':'<b>F</b> Take Blood Essence';if(state.knife&&!state.doorOpen&&Math.abs(p.y+185)<70)msg='<b>F</b> Pick the lock'}ui.prompt.innerHTML=msg;ui.prompt.classList.toggle('hidden',!msg)}
 function worldToScreen(x,y){return [innerWidth/2+(x-state.player.x),innerHeight/2+(y-state.player.y)]}
-function render(){const w=innerWidth,h=innerHeight;if(state.scene==='meadow')drawMeadow(w,h);else drawPrison(w,h);drawPlayer(w/2,h/2);requestAnimationFrame(loop)}
-function drawMeadow(w,h){const g=ctx.createLinearGradient(0,0,0,h);g.addColorStop(0,'#77a55d');g.addColorStop(1,'#315d36');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);for(let i=0;i<140;i++){const x=((i*173)%1400)-700,y=((i*281)%900)-450,[sx,sy]=worldToScreen(x,y);if(sx<-30||sx>w+30||sy<-30||sy>h+30)continue;if(i%13===0){ctx.fillStyle='#27452b';ctx.fillRect(sx-7,sy,14,34);ctx.beginPath();ctx.fillStyle='#285a32';ctx.arc(sx,sy-8,30,0,7);ctx.fill()}else{ctx.fillStyle=['#f4d76b','#e9a7d0','#e8e2d2'][i%3];ctx.beginPath();ctx.arc(sx,sy,2.5,0,7);ctx.fill()}}for(const e of state.enemies)drawEnemy(e)}
-function drawPrison(w,h){ctx.fillStyle='#171a18';ctx.fillRect(0,0,w,h);const [x1,y1]=worldToScreen(-250,-210),[x2,y2]=worldToScreen(250,210);ctx.fillStyle='#242925';ctx.fillRect(x1,y1,x2-x1,y2-y1);ctx.strokeStyle='#55564e';ctx.lineWidth=5;ctx.strokeRect(x1,y1,x2-x1,y2-y1);const door=worldToScreen(0,-205);if(!state.doorOpen){ctx.strokeStyle='#20231f';ctx.lineWidth=8;for(let x=-55;x<=55;x+=22){ctx.beginPath();ctx.moveTo(door[0]+x,door[1]-5);ctx.lineTo(door[0]+x,door[1]+65);ctx.stroke()}}for(const it of state.items.filter(x=>!x.taken)){const [x,y]=worldToScreen(it.x,it.y);if(it.kind==='meal'){ctx.fillStyle='#805d35';ctx.fillRect(x-25,y-12,50,24);ctx.fillStyle='#c1b08d';ctx.fillRect(x-15,y-5,30,8)}else{ctx.fillStyle='#cb1e43';ctx.beginPath();ctx.moveTo(x,y-22);ctx.lineTo(x+14,y);ctx.lineTo(x,y+22);ctx.lineTo(x-14,y);ctx.fill();ctx.shadowColor='#ef365c';ctx.shadowBlur=18;ctx.stroke();ctx.shadowBlur=0}}}
-function drawSpriteFrame(image,frame,row,columns,x,y,size,alpha=1,inset=0){const cellW=image.naturalWidth/columns,cellH=image.naturalHeight/4,gx=cellW*inset,gy=cellH*inset;ctx.globalAlpha=alpha;ctx.drawImage(image,frame*cellW+gx,row*cellH+gy,cellW-gx*2,cellH-gy*2,x-size/2,y+27-size,size,size)}
-function drawPlayer(x,y){const p=state.player,action=p.hp<=0?'defeated':p.attacking>0?'attack':p.blocking?'block':p.sprinting?'sprint':p.moving?'walk':'idle',motion=motionAtlases[action],usingMotion=motion&&motion.complete&&motion.naturalWidth,image=usingMotion?motion:playerAtlas;if(image.complete&&image.naturalWidth){const frames=usingMotion?8:4,fps=action==='attack'?16:action==='sprint'?10:action==='walk'?7:7,progress=p.animTime*fps,frame=Math.floor(progress)%frames,next=(frame+1)%frames,mix=progress-Math.floor(progress),row=spriteRows[p.direction],size=action==='attack'?144:112,bob=(action==='walk'||action==='sprint')?Math.sin(progress*Math.PI)*1.25:0,inset=action==='attack'?.045:action==='walk'?.06:action==='sprint'?.012:0;ctx.save();ctx.imageSmoothingEnabled=true;if(usingMotion&&(action==='walk'||action==='sprint')){drawSpriteFrame(image,frame,row,8,x,y+bob,size,1-mix,inset);drawSpriteFrame(image,next,row,8,x,y+bob,size,mix,inset)}else{const atlasFrame=usingMotion?frame:spriteActions[action]*4+frame;drawSpriteFrame(image,atlasFrame,row,usingMotion?8:24,x,y,size,1,inset)}ctx.restore();return}ctx.save();ctx.translate(x,y);ctx.fillStyle=p.blocking?'#9da7a0':'#d9c9ae';ctx.beginPath();ctx.arc(0,0,15,0,7);ctx.fill();ctx.fillStyle='#293b45';ctx.fillRect(-10,9,20,22);ctx.restore()}
+function render(){
+  const w=innerWidth,h=innerHeight;
+  if(state.scene==='meadow')drawMeadow(w,h);else drawPrison(w,h);
+  const actors=[{y:state.player.y,paint:()=>{
+    scenery.ellipse(ctx,w/2,h/2+22,24,8,'#081b2a40');
+    drawPlayer(w/2,h/2);
+  }},...state.enemies.map(e=>({y:e.y,paint:()=>drawEnemy(e)}))];
+  if(state.scene==='meadow')actors.push(...scenery.trees);
+  actors.sort((a,b)=>a.y-b.y).forEach(a=>a.paint());
+  scenery.atmosphere(w,h);
+  requestAnimationFrame(loop);
+}
+function drawMeadow(w,h){scenery.meadow(w,h)}
+function drawPrison(w,h){scenery.prison(w,h)}
+// Measured transparent row gaps in sprint.png; the artwork is not an equal 4-row grid.
+// Each frame keeps its original aspect ratio and uses a shared 0.5 world-pixel scale.
+const locomotionRows = [[35,229],[258,441],[470,654],[678,887]];
+function drawPlayer(x,y) {
+  const p=state.player, image=motionAtlases.sprint;
+  if(!image.complete || !image.naturalWidth) return;
+  const row=spriteRows[p.direction] ?? 0;
+  const [top,bottom]=locomotionRows[row];
+  const moving=p.moving && p.hp>0 && !p.blocking && p.attacking<=0;
+  const frame=moving ? Math.floor(p.animTime*(p.sprinting?10:7))%8 : 0;
+  // Integer boundaries avoid sampling neighbouring columns during filtering.
+  const left=Math.ceil(frame*image.naturalWidth/8);
+  const right=Math.floor((frame+1)*image.naturalWidth/8);
+  const width=right-left, height=bottom-top, scale=0.5;
+  ctx.save();
+  ctx.imageSmoothingEnabled=true;
+  ctx.translate(x,y+27);
+  if(p.hp<=0) ctx.rotate(Math.PI/2);
+  ctx.drawImage(image,left,top,width,height,-width*scale/2,-height*scale,width*scale,height*scale);
+  ctx.restore();
+  if(p.blocking){
+    ctx.save();ctx.strokeStyle='#a9d9ef';ctx.lineWidth=3;
+    ctx.beginPath();ctx.arc(x,y-15,34,p.angle-1.1,p.angle+1.1);ctx.stroke();ctx.restore();
+  }
+  if(p.attacking>0 && p.hp>0) {
+    // The old attack sheet has overlapping effects. Draw an unrestricted swing
+    // in world space instead of clipping its sword and trail to an atlas cell.
+    const progress=Math.max(0,Math.min(1,1-p.attacking/0.5));
+    const facing={down:Math.PI/2,left:Math.PI,right:0,up:-Math.PI/2}[p.direction];
+    const angle=facing-1.5+progress*3;
+    ctx.save();ctx.translate(x,y-20);
+    ctx.strokeStyle='rgba(143,213,255,0.65)';ctx.lineWidth=8;
+    ctx.beginPath();ctx.arc(0,0,53,angle-0.65,angle);ctx.stroke();
+    ctx.rotate(angle);ctx.strokeStyle='#edf7ff';ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(18,0);ctx.lineTo(62,0);ctx.stroke();
+    ctx.strokeStyle='#c7a566';ctx.lineWidth=4;
+    ctx.beginPath();ctx.moveTo(24,-7);ctx.lineTo(24,7);ctx.stroke();ctx.restore();
+  }
+}
 function drawEnemy(e){const [x,y]=worldToScreen(e.x,e.y);ctx.save();ctx.translate(x,y);ctx.fillStyle=e.hit>0?'#fff':e.color;ctx.beginPath();ctx.arc(0,0,e.type==='high'?22:16,0,7);ctx.fill();ctx.fillStyle='#17080a';ctx.fillRect(-13,12,26,e.type==='high'?34:26);ctx.font='11px system-ui';ctx.textAlign='center';ctx.fillStyle='#f1e5dc';ctx.fillText(e.name,0,-25);ctx.fillStyle='#1b0b0d';ctx.fillRect(-24,-19,48,4);ctx.fillStyle='#ba2433';ctx.fillRect(-24,-19,48*Math.max(0,e.hp/e.maxHp),4);ctx.restore()}
 let last=performance.now();function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;update(dt);render()}requestAnimationFrame(loop);
