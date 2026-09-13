@@ -1,0 +1,6 @@
+.combat-hud{position:fixed;top:105px;left:28px;color:#e8d8a9;font:12px system-ui;text-shadow:0 2px 3px #000;pointer-events:none}
+#weapon-wheel{position:fixed;inset:0;z-index:7;display:grid;place-items:center;background:#07101899;backdrop-filter:blur(3px)}
+.wheel-disc{width:400px;height:400px;max-width:95vw;border-radius:50%;border:2px solid #b69b60;background:radial-gradient(#25302a,#101712);text-align:center;padding-top:120px;position:relative;box-shadow:0 0 70px #000}
+.wheel-disc h2{margin:30px 0 7px;font-size:23px}.wheel-disc p{font:11px system-ui;margin:0 auto;width:165px;color:#dbcfad}.wheel-disc small{display:block;font:10px system-ui;margin-top:12px;color:#aa9e82}
+.wheel-options button{position:absolute;left:50%;top:50%;width:116px;height:65px;margin:-32px -58px;transform:rotate(var(--angle)) translateY(-142px) rotate(calc(-1 * var(--angle)));border:1px solid #847752;background:#18241e;color:#ded3ad;border-radius:14px;cursor:pointer}
+.wheel-options button.selected{background:#65552c;border:2px solid #f4d993;box-shadow:0 0 20px #e8c67955}.wheel-options button:disabled{opacity:.35;cursor:default}

@@ -56,13 +56,14 @@ function consume(id){
 function showDialogue(speaker,title,copy,action=null){clearKeys();state.dialogueAction=action;ui.speaker.textContent=speaker;ui.title.textContent=title;ui.copy.textContent=copy;ui.dialogue.classList.remove('hidden')}
 function transition(action){
  if(state.transitioning)return;state.transitioning=true;clearKeys();ui.fade.classList.add('on');
- setTimeout(()=>{action();ui.fade.classList.remove('on');state.transitioning=false},1100);
+ setTimeout(()=>{action();ui.fade.classList.remove('on');state.transitioning=false},2100);
 }
 function defeat(){
  if(state.scene==='meadow')transition(()=>{state.scene='prison-wake';state.enemies=[];state.player.x=0;state.player.y=90;state.player.hp=45;showDialogue('SOME TIME LATER','Cold stone. Iron bars.','A meal tray lies beside you. Find a tool, escape the cell, and fight your way upstairs.',()=>startPrison())});
  else transition(()=>showDialogue('A SECOND CHANCE','The guards drag you back.','Your equipment is still hidden in your clothes. Try blocking a strike or dashing out of its red warning circle.',()=>startPrison()));
 }
 function startPrison(){
+ state.stairHidden=false;state.player.swing=null;state.player.stamina=100;
  state.scene='prison';Object.assign(state.player,{x:0,y:90,hp:100,direction:'down',attacking:0});state.enemies=[];state.doorOpen=false;
  state.items=[{kind:'meal',x:-115,y:25,taken:state.knife},{kind:'essence',x:140,y:-70,taken:state.inventory.some(i=>i.id==='blood')}];
  clearKeys();setObjective(state.knife?'Use the knife on the lock':'Search the meal tray');
@@ -92,7 +93,7 @@ function attack(){
  const p=state.player;p.attacking=.4;p.animTime=0;
  for(const e of state.enemies)if(Math.hypot(e.x-p.x,e.y-p.y)<88){
   e.hp-=state.knife?28:12;if(e.type==='high'&&state.scene==='meadow')e.hp=Math.max(1,e.hp);
-  e.hit=.18;e.windup=0;e.cooldown=Math.max(e.cooldown,.65);
+  e.hit=.18;
   const d=Math.hypot(e.x-p.x,e.y-p.y)||1,nx=e.x+(e.x-p.x)/d*12,ny=e.y+(e.y-p.y)/d*12;
   if(walkable(nx,ny,12)){e.x=nx;e.y=ny}
  }
@@ -102,11 +103,11 @@ function interact(){
  if(state.scene==='prison'){
   const item=state.items.find(i=>!i.taken&&Math.hypot(i.x-p.x,i.y-p.y)<70);
   if(item){item.taken=true;if(item.kind==='meal'){
-   state.knife=true;p.hp=100;state.inventory.push({id:'knife',name:'Smuggled Table Knife',type:'Weapon',rarity:'Common',description:'Equipped. 28 damage per strike; also picks the cell lock.',icon:'†'});setObjective('Use the knife on the lock');
+   state.knife=true;state.weapon='knife';p.hp=100;state.inventory.push({id:'knife',name:'Smuggled Table Knife',type:'Weapon',rarity:'Common',description:'A quick, short-range thrust; also picks the cell lock.',icon:'†'});setObjective('Use the knife on the lock');
   }else state.inventory.push({id:'blood',name:'Blood Essence',type:'Essence',rarity:'Epic',description:'Optional story essence. Its abilities remain unknown.',icon:'◆',consumable:true});
   }else if(state.knife&&!state.doorOpen&&Math.abs(p.x)<60&&Math.abs(p.y+170)<65)openCell();
  }else if(state.scene==='vat'&&!state.enemies.length&&p.y<-290&&Math.abs(p.x)<80&&!state.completed){
-  state.completed=true;setObjective('Escaped the Blood Cult');showDialogue('DAWN BEYOND THE CULT','You made it out.','You leave the steaming crimson vat behind. Your knife—and your choice about the Blood Essence—remain yours. End of this tutorial chapter.');
+  enterTown();
  }
 }
 function flashSlot(k){const slot=[...document.querySelectorAll('.slot')].find(x=>x.dataset.key===k);if(slot){slot.classList.add('active');setTimeout(()=>slot.classList.remove('active'),160)}}
@@ -116,6 +117,7 @@ function initSlots(){
 }
 initSlots();
 function walkable(x,y,r=14){
+ if(state.scene==='town')return townWalkable(x,y,r);
  if(state.scene==='meadow')return x>=-620&&x<=620&&y>=-420&&y<=420;
  if(state.scene==='prison'){
   if(y>175||y<-840)return false;if(y>=-145)return Math.abs(x)<=220;
@@ -133,7 +135,7 @@ function updateEnemies(dt){
   if(e.hp<=0)continue;e.hit=Math.max(0,e.hit-dt);e.cooldown-=dt;
   const dx=p.x-e.x,dy=p.y-e.y,d=Math.hypot(dx,dy)||1;e.moving=false;
   if(state.scene!=='meadow'&&d>265)continue;
-  if(e.windup>0){e.windup-=dt;if(e.windup<=0){if(Math.hypot(p.x-e.attackX,p.y-e.attackY)<54&&p.dash<=0)p.hp-=e.damage*(p.blocking?.2:1);e.cooldown=1.1}}
+  if(e.windup>0){e.windup-=dt;if(e.windup<=0){if(Math.hypot(p.x-e.attackX,p.y-e.attackY)<54&&p.dash<=0)receiveHit(e);e.cooldown=1.1}}
   else if(d<67&&e.cooldown<=0){e.windup=.6;e.attackX=p.x;e.attackY=p.y}
   else if(d>45){
    const bx=e.x,by=e.y;move(e,dx/d*e.speed*dt,dy/d*e.speed*dt,12);
@@ -148,16 +150,19 @@ function updateEnemies(dt){
  }
 }
 function update(dt){
+ if(state.stairClimb){updateStairClimb(dt);return}
+ if(state.wheel)return;
  if(paused())return;const p=state.player;state.time+=dt;if(state.completed){clearKeys();return}
+ updateCombat(dt);
  let dx=(state.keys.has('d')||state.keys.has('arrowright')?1:0)-(state.keys.has('a')||state.keys.has('arrowleft')?1:0),dy=(state.keys.has('s')||state.keys.has('arrowdown')?1:0)-(state.keys.has('w')||state.keys.has('arrowup')?1:0);
  const d=Math.hypot(dx,dy)||1;p.moving=!!(dx||dy);p.sprinting=p.moving&&state.keys.has('shift');
  if(p.moving){p.angle=Math.atan2(dy,dx);p.direction=Math.abs(dx)>Math.abs(dy)?(dx<0?'left':'right'):(dy<0?'up':'down')}
  p.animTime+=dt;p.attacking=Math.max(0,p.attacking-dt);p.dash=Math.max(0,p.dash-dt);p.dashCooldown=Math.max(0,p.dashCooldown-dt);
  if(state.keys.has(' ')||state.keys.has('j'))attack();
- const speed=(p.sprinting?205:125)*(p.blocking?.6:1)*(p.dash>0?3.2:1);move(p,dx/d*speed*dt,dy/d*speed*dt);updateEnemies(dt);
+ const speed=(p.sprinting?205:125)*(p.blocking?.6:1)*(p.dash>0?3.2:1)*(p.attacking>0?.35:1);move(p,dx/d*speed*dt,dy/d*speed*dt);updateEnemies(dt);
  if(state.scene==='meadow'&&state.time>35)p.hp-=35*dt;
  if(p.hp<=0){p.hp=0;defeat()}
- if(state.scene==='prison'&&p.y<-815){if(!state.enemies.length)enterVatRoom();else{p.y=-813;setObjective('Defeat the remaining guards first')}}
+ if(state.scene==='prison'&&p.y<-795){if(!state.enemies.length)beginStairClimb();else{p.y=-793;setObjective('Defeat the remaining guards first')}}
  $('#health-fill').style.width=p.hp+'%';$('#health-label').textContent=Math.ceil(p.hp)+' / 100';updatePrompt();
 }
 function updatePrompt(){
@@ -173,7 +178,7 @@ function updatePrompt(){
 function worldToScreen(x,y){return [innerWidth/2+x-state.player.x,innerHeight/2+y-state.player.y]}
 function render(){
  const w=innerWidth,h=innerHeight;
- if(state.scene==='meadow')scenery.meadow(w,h);else if(state.scene==='vat')scenery.vat(w,h);else scenery.prison(w,h);
+ if(state.scene==='town')drawTown(w,h);else if(state.scene==='meadow')scenery.meadow(w,h);else if(state.scene==='vat')scenery.vat(w,h);else scenery.prison(w,h);
  for(const e of state.enemies)if(e.windup>0){const [x,y]=worldToScreen(e.attackX,e.attackY);scenery.ellipse(ctx,x,y,54,27,'#df365444');ctx.strokeStyle='#ff8d79';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(x,y,54,27,0,0,Math.PI*2);ctx.stroke()}
  const actors=[{y:state.player.y,paint:()=>{scenery.ellipse(ctx,w/2,h/2+22,24,8,'#081b2a40');drawPlayer(w/2,h/2)}},...state.enemies.map(e=>({y:e.y,paint:()=>drawEnemy(e)}))];
  if(state.scene==='meadow')actors.push(...scenery.trees);if(state.scene==='vat')actors.push({y:15,paint:()=>scenery.cauldron()});

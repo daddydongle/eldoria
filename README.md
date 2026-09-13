@@ -1,5 +1,16 @@
 # Eldoria: Confluence
 
+## Combat and Willowbrook update
+
+- Attacks have wind-up, directional reach, recovery and stamina costs. Face the enemy before striking. Hits no longer cancel enemy wind-ups, so holding attack cannot stun-lock them.
+- Blocking protects your front, costs stamina, and fails when exhausted. Dash out of the red attack warnings. Stamina regenerates after a short rest; attacking slows movement.
+- Hold **Tab** for the weapon wheel. Hover a weapon (or use arrow keys) and release Tab to equip. Unfound weapons are locked. Combat pauses while selecting; switching is unavailable mid-attack.
+- Unarmed punches, quick knife thrusts, sweeping sword strikes and slower axe chops use distinct procedural weapon motion, reach, damage and timing. These are not new full-body sprite animation sheets.
+- The character climbs out of sight before the stair fade. Leaving the cauldron room now enters **Willowbrook**, an explorable rural district with cottages, wheat fields, a well, resident dialogue and a smithy.
+- At the smithy's outdoor rack, press **F** to borrow a sword and wood axe, then choose either in the wheel. The town is a safe starter area; building interiors and further quests are not implemented.
+- `adventure.js` and `adventure.css` contain the new combat/equipment systems, stair sequence and town. Include both when uploading the game.
+- `work/check-adventure.cjs` tests enemy retaliation during held attacks, Tab hold/release, stair fade ordering, town entry and weapon collection. The older escape smoke test predates timed/directional combat and is superseded for this route.
+
 A dependency-free Canvas starter prototype for a fantasy action RPG. The opening tutorial begins in an Eldorian meadow, introduces an intentionally unwinnable Blood Cult encounter, and continues with a prison escape and optional Blood Essence pickup.
 
 ## Play locally
