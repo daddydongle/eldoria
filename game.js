@@ -19,7 +19,9 @@ function prepareArt(image,columns){
     artFrames.set(image,frames);
   }catch{artFrames.set(image,Array.from({length:columns},(_,i)=>({x:i*image.width/columns,y:0,w:image.width/columns,h:image.height})))}
 }
-idleImage.onload=()=>prepareArt(idleImage,4);enemyImage.onload=()=>prepareArt(enemyImage,3);
+// Measured opaque bounds avoid file:// pixel-access restrictions including padding
+// in the idle size. These four crops share the movement sprite's foot anchor.
+idleImage.onload=()=>artFrames.set(idleImage,[{x:70,y:93,w:412,h:556},{x:680,y:95,w:337,h:554},{x:1157,y:95,w:337,h:553},{x:1693,y:93,w:391,h:555}]);enemyImage.onload=()=>prepareArt(enemyImage,3);
 idleImage.src='assets/characters/player/default/idle-directions.png';enemyImage.src='assets/characters/enemies/blood-cult.png';
 const spriteRows={down:0,left:1,right:2,up:3},locomotionRows=[[35,229],[258,441],[470,654],[678,887]];
 function resize(){canvas.width=innerWidth*devicePixelRatio;canvas.height=innerHeight*devicePixelRatio;ctx.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0)}
@@ -184,7 +186,8 @@ function drawArt(image,index,x,y,height,flip=false){
 function drawPlayer(x,y){
  const p=state.player,row=spriteRows[p.direction]??0,moving=p.moving&&p.hp>0&&!p.blocking&&p.attacking<=0;
  ctx.save();if(p.hp<=0){ctx.translate(x,y+20);ctx.rotate(Math.PI/2);ctx.translate(-x,-y-20)}
- if(!moving&&drawArt(idleImage,row,x,y+27,96)){}
+ const idleHeight=(locomotionRows[row][1]-locomotionRows[row][0])*.5;
+ if(!moving&&drawArt(idleImage,row,x,y+27,idleHeight)){}
  else if(sprintImage.complete&&sprintImage.naturalWidth){
   const [top,bottom]=locomotionRows[row],frame=moving?Math.floor(p.animTime*(p.sprinting?10:7))%8:0,l=Math.ceil(frame*sprintImage.naturalWidth/8),r=Math.floor((frame+1)*sprintImage.naturalWidth/8);
   ctx.drawImage(sprintImage,l,top,r-l,bottom-top,x-(r-l)*.25,y+27-(bottom-top)*.5,(r-l)*.5,(bottom-top)*.5);
