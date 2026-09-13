@@ -19,15 +19,15 @@ const ESSENCES = [
   ['Dragon','confluence',['Dragon Breath','Scale Armor','Draconic Presence','Tail Sweep','Wing Buffet']],
   ['Gate','confluence',['Dimensional Rift','Portal Link','Spatial Tear','Warp Step','Banishment']],
   ['Karma','confluence',['Retribution Strike','Equalizing Aura','Fate Tether','Merit Shield','Rebound Curse']]
-].map(([name,type,abilities])=>({name,type,abilities}));
+].map(([name,type,abilities])=>({name,type,abilities:abilities.slice(0,2)}));
 
-// The supplied sequence contains 19 distinct keys; [ completes the 20-slot bar.
-const ABILITY_KEYS = ['`','1','2','3','4','5','6','7','8','9','0','-','=','e','r','t','y','u','i','['];
+const ABILITY_KEYS = ['1','2','3','4','5','6','7','8'];
 const progression = {
-  rules:{coreEssencesRequired:3,confluenceEssencesRequired:1,essencesPerBuild:4,abilitiesPerEssence:5,totalAbilitySlots:20,baseAbilitiesOnCompletion:4,awakeningStoneUnlocks:16},
+  rules:{coreEssencesRequired:3,confluenceEssencesRequired:1,essencesPerBuild:4,abilitiesPerEssence:2,totalAbilitySlots:8,baseAbilitiesOnCompletion:4,awakeningStoneUnlocks:4},
   absorbedCore:[], confluence:null, unlockedAbilities:[], awakeningStonesUsed:0,
   absorbCore(name){if(this.absorbedCore.length>=3)return false;const e=ESSENCES.find(x=>x.name===name&&x.type==='core');if(!e||this.absorbedCore.includes(name))return false;this.absorbedCore.push(name);return true},
-  unlockConfluence(name){if(this.absorbedCore.length!==3)return false;const e=ESSENCES.find(x=>x.name===name&&x.type==='confluence');if(!e)return false;this.confluence=name;this.unlockedAbilities=[...this.absorbedCore,name].map(n=>ESSENCES.find(e=>e.name===n).abilities[0]);return true},
-  useAwakeningStone(){if(!this.confluence||this.awakeningStonesUsed>=16)return null;const build=[...this.absorbedCore,this.confluence].map(n=>ESSENCES.find(e=>e.name===n));const locked=build.flatMap(e=>e.abilities.slice(1)).filter(a=>!this.unlockedAbilities.includes(a));const ability=locked[0];if(ability){this.unlockedAbilities.push(ability);this.awakeningStonesUsed++}return ability}
+  unlockConfluence(name){if(this.absorbedCore.length!==3||this.confluence)return false;const e=ESSENCES.find(x=>x.name===name&&x.type==='confluence');if(!e)return false;this.confluence=name;this.unlockedAbilities=[...this.absorbedCore,name].map(n=>ESSENCES.find(e=>e.name===n).abilities[0]);return true},
+  useAwakeningStone(){if(!this.confluence||this.awakeningStonesUsed>=4)return null;const build=[...this.absorbedCore,this.confluence].map(n=>ESSENCES.find(e=>e.name===n));const locked=build.flatMap(e=>e.abilities.slice(1)).filter(a=>!this.unlockedAbilities.includes(a));const ability=locked[0];if(ability){this.unlockedAbilities.push(ability);this.awakeningStonesUsed++}return ability},
+  slots(){return [...this.absorbedCore,...(this.confluence?[this.confluence]:[])].flatMap(n=>ESSENCES.find(e=>e.name===n).abilities)}
 };
 window.ELDORIA_DATA={ESSENCES,ABILITY_KEYS,progression};

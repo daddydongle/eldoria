@@ -81,10 +81,10 @@ const scenery = (() => {
   function prison(w,h){
     ctx.fillStyle='#10191c';ctx.fillRect(0,0,w,h);ctx.save();const [ox,oy]=worldToScreen(0,0);ctx.translate(ox,oy);
     // The corridor spans the existing escape area, beyond the cell's north door.
-    ctx.fillStyle='#242e31';ctx.fillRect(-250,-430,500,640);
-    for(let row=0;row<16;row++)for(let col=0;col<9;col++){
-      const x=-250+col*62-(row%2)*31,y=-430+row*41;
-      ctx.save();ctx.beginPath();ctx.rect(-250,-430,500,640);ctx.clip();
+    ctx.fillStyle='#242e31';ctx.fillRect(-250,-870,500,1080);
+    for(let row=0;row<27;row++)for(let col=0;col<9;col++){
+      const x=-250+col*62-(row%2)*31,y=-870+row*41;
+      ctx.save();ctx.beginPath();ctx.rect(-250,-870,500,1080);ctx.clip();
       ctx.fillStyle=['#354044','#303b40','#3b4445','#323d41'][(row*3+col)%4];ctx.fillRect(x+1,y+1,59,38);
       ctx.strokeStyle='#52606355';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(x+2,y+37);ctx.lineTo(x+2,y+2);ctx.lineTo(x+57,y+2);ctx.stroke();
       if((row+col)%5===0){ctx.strokeStyle='#17292a80';ctx.beginPath();ctx.moveTo(x+20,y+3);ctx.lineTo(x+26,y+17);ctx.lineTo(x+20,y+25);ctx.stroke();}ctx.restore();
@@ -98,6 +98,10 @@ const scenery = (() => {
       ctx.fillStyle='#748080';ctx.fillRect(x,y,width,4);ctx.fillStyle='#263239';ctx.fillRect(x,y+height-9,width,9);
       ctx.strokeStyle='#27363b';for(let xx=x+32;xx<x+width;xx+=42){ctx.beginPath();ctx.moveTo(xx,y);ctx.lineTo(xx,y+height-9);ctx.stroke();}}
     wall(-277,-235,214,40);wall(64,-235,213,40);wall(-277,-235,27,460);wall(250,-235,27,460);wall(-277,210,554,29);
+    wall(-277,-870,27,635);wall(250,-870,27,635);
+    ctx.fillStyle='#10191c';ctx.fillRect(-250,-870,165,160);ctx.fillRect(85,-870,165,160);
+    for(let i=0;i<10;i++){const y=-850+i*14;ctx.fillStyle=i%2?'#677174':'#596367';ctx.fillRect(-80,y,160,12);ctx.fillStyle='#9b9d91';ctx.fillRect(-80,y,160,2);ctx.fillStyle='#242e35';ctx.fillRect(-80,y+10,160,3);}
+    for(const y of [-390,-620])for(const x of [-233,233]){glow(x,y,160,'rgba(245,137,56,.2)');ctx.fillStyle='#a46d3e';ctx.fillRect(x-4,y,8,25);ellipse(ctx,x,y,5,12,'#ffc67a');}
     // Door posts and a sliding iron grate. Open state exposes the passage.
     wall(-70,-235,12,53);wall(58,-235,12,53);
     if(!state.doorOpen){ctx.fillStyle='#101d24';ctx.fillRect(-57,-214,114,13);for(let x=-52;x<=52;x+=17){ctx.fillStyle='#18262e';ctx.fillRect(x,-218,5,73);ctx.fillStyle='#809091';ctx.fillRect(x,-218,1,73);}ctx.fillStyle='#35454a';ctx.fillRect(-57,-161,114,5);ctx.fillStyle='#c0a268';ctx.fillRect(35,-187,13,16);ellipse(ctx,41,-180,2,3,'#242d2b');}
@@ -126,6 +130,29 @@ const scenery = (() => {
     }
     ctx.restore();
   }
+  function vat(w,h){
+    ctx.fillStyle='#10131b';ctx.fillRect(0,0,w,h);ctx.save();const [x,y]=worldToScreen(0,0);ctx.translate(x,y);
+    ctx.fillStyle='#33303a';ctx.fillRect(-360,-390,720,720);
+    for(let r=0;r<18;r++)for(let c=0;c<12;c++){ctx.fillStyle=['#45414a','#3c3943','#49434b'][(r+c*3)%3];ctx.fillRect(-358+c*60,-388+r*40,58,38);}
+    ctx.strokeStyle='#a6615866';ctx.lineWidth=3;ctx.beginPath();ctx.ellipse(0,-65,210,150,0,0,Math.PI*2);ctx.stroke();
+    ctx.fillStyle='#171c26';ctx.fillRect(-380,-390,25,745);ctx.fillRect(355,-390,25,745);ctx.fillRect(-380,-390,760,28);
+    for(const x of [-310,310])for(const y of [-290,0,240]){ellipse(ctx,x,y+15,32,15,'#11141c88');ctx.fillStyle='#65606b';ctx.fillRect(x-17,y-60,34,72);ctx.fillStyle='#87818a';ctx.fillRect(x-21,y-64,42,10);glow(x,y-40,140,'rgba(243,92,63,.16)');ellipse(ctx,x,y-42,5,12,'#ffb76a');}
+    ctx.fillStyle=state.enemies.length?'#562f36':'#739a82';ctx.fillRect(-55,-367,110,18);ctx.fillStyle='#e5d6ba';ctx.font='12px Georgia';ctx.textAlign='center';ctx.fillText('NORTH EXIT',0,-340);
+    for(let i=0;i<5;i++){ctx.fillStyle=i%2?'#77727a':'#57535f';ctx.fillRect(-75,285+i*9,150,7);}
+    ctx.restore();
+  }
+  function cauldron(){
+    ctx.save();const [x,y]=worldToScreen(0,-85);ctx.translate(x,y);
+    ellipse(ctx,9,87,142,39,'#090b1480');glow(0,-15,200,'rgba(210,27,50,.19)');
+    const metal=ctx.createLinearGradient(-130,0,130,0);metal.addColorStop(0,'#211f2b');metal.addColorStop(.35,'#68606a');metal.addColorStop(.7,'#37343f');metal.addColorStop(1,'#1b1c28');
+    ctx.fillStyle=metal;ctx.beginPath();ctx.moveTo(-125,-30);ctx.bezierCurveTo(-135,125,135,125,125,-30);ctx.closePath();ctx.fill();
+    for(const x of [-92,92]){ctx.fillStyle='#332d35';ctx.fillRect(x-9,54,18,42);}
+    ellipse(ctx,0,-30,132,68,'#9b8082');ellipse(ctx,0,-30,121,58,'#30222d');ellipse(ctx,0,-28,114,51,'#a61e39');ellipse(ctx,-12,-40,91,31,'#c62d43');
+    const t=performance.now()/1000;for(let i=0;i<13;i++){const x=Math.sin(i*7.3)*92,y=-30+Math.cos(i*4.2)*33,r=2+(Math.sin(t*2+i)+1)*3;ellipse(ctx,x,y,r,r*.5,'#ef7b7377');}
+    ctx.strokeStyle='#c69980';ctx.lineWidth=3;for(const x of [-137,137]){ctx.beginPath();ctx.ellipse(x,-10,15,23,0,0,Math.PI*2);ctx.stroke();}
+    ctx.strokeStyle='#a47772';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-91,24);ctx.lineTo(0,69);ctx.lineTo(91,24);ctx.stroke();
+    ctx.restore();
+  }
   function atmosphere(w,h){
     if(state.scene==='meadow'){
       const time=performance.now()/1000;ctx.save();
@@ -135,5 +162,5 @@ const scenery = (() => {
     const v=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.28,w/2,h/2,Math.max(w,h)*.7);
     v.addColorStop(0,'#081c2200');v.addColorStop(1,state.scene==='meadow'?'#102d304d':'#060d19b0');ctx.fillStyle=v;ctx.fillRect(0,0,w,h);
   }
-  return {meadow,prison,trees,atmosphere,ellipse};
+  return {meadow,prison,vat,cauldron,trees,atmosphere,ellipse};
 })();
